@@ -40,6 +40,21 @@ SQLITE_LIB.Error = function () {
 };
 
 /**
+ * запрос в базу без возврата значения (CREATE, INSERT, UPDATE)
+ * @param {type} sql
+ * @returns {undefined}
+ */
+SQLITE_LIB.Exec = function (sql) {
+    var Result = this.c_Exec(sql);
+    if (!Result) {
+        if (this.debug) {
+            window.alert("ОШИБКА SQLITE3: " + this.Error());
+        }
+    }
+    return Result;
+};
+
+/**
  * Запрос в базу данных с возвратом значения (SELECT)
  * Возвратит false - при ошибке или результирующий самомтоятельный объект
  * @param {type} sql
@@ -95,6 +110,82 @@ SQLITE_LIB.Query = function (sql) {
     return new res();
 };
 
+SQLITE_LIB.GetTablesDB = function() {
+    return SQLITE_LIB.Query('SELECT name FROM sqlite_master WHERE type = "table"');
+};
+
+// КЛАСС УСЛОВИЙ
+// cond = "aa=bb"
+SQLITE_LIB.WHERE = function(cond){
+    this.__where = "" + cond;
+    
+    this.ins = function(cond){
+        this.__where = this.__where + "("+ cond +") ";
+        return this;
+    };
+    
+    this.add = function(str){
+        this.__where = this.__where + str;
+        return this;
+    };
+    this._AND = function(){
+        this.__where = this.__where + " AND ";
+        return this;
+    };
+    this._OR = function(){
+        this.__where = this.__where + " OR ";
+        return this;
+    };
+    this._XOR = function(){
+        this.__where = this.__where + " XOR ";
+        return this;
+    };
+    this._LIKE = function(){
+        this.__where = this.__where + " LIKE ";
+        return this;
+    };
+    
+    this.insAND = function(wh){
+        this.__where = this.__where + " AND("+ wh.__where +") ";
+        return this;
+    };
+    this.insOR = function(wh){
+        this.__where = this.__where + " OR("+ wh.__where +") ";
+        return this;
+    };
+    this.insXOR = function(wh){
+        this.__where = this.__where + " XOR("+ wh.__where +") ";
+        return this;
+    };
+    this.insLIKE = function(wh){
+        this.__where = this.__where + " LIKE("+ wh.__where +") ";
+        return this;
+    };
+    
+    this.AND = function(cond){
+        this.__where = this.__where + " AND "+cond+" ";
+        return this;
+    };
+    
+    this.OR = function(cond){
+        this.__where = this.__where + " OR "+cond+" ";
+        return this;
+    };
+    
+    this.XOR = function(cond){
+        this.__where = this.__where + " XOR "+cond+" ";
+        return this;
+    };
+    this.LIKE = function(cond){
+        this.__where = this.__where + " LIKE %"+ cond +"% ";
+        return this;
+    };
+    
+    
+    return this;
+    
+};
+
 // Класс создания нового запроса в базу данных
 SQLITE_LIB.SQL = function () {
     this.sql = "";
@@ -121,9 +212,9 @@ SQLITE_LIB.SQL = function () {
         return this;
     };
 
-
     this.__fields = [];
-    // Указать основные поля запроса
+    
+    // Создать запрос к таблицам SELECT
     this.select = function (fields) {
         this.__isRes = true;
         this.__fields = null;
@@ -150,20 +241,47 @@ SQLITE_LIB.SQL = function () {
         };
         this.sql = SQL;
         return this;
-
     };
     
-    // Добавить к запросу WHERE ["field1=AAA", "field2>0", ......]
-    this.where = function(cond){
-        var SQL = "WHERE ";
-        
-        for (var ind = 0; ind < cond.length; ind++) {
-            SQL = SQL + cond[ind];
-            if (ind < cond.length - 1) {
+    // создать запрос на обновление данных в таблице 
+    // sets = объект {"поле":"данные", "поле2":"данные2", .... }
+    this.update = function(sets){
+        this.__isRes = false;
+        var SQL = "UPDATE ";
+        for (var ind = 0; ind < this.__tables.length; ind++) {
+            SQL = SQL + this.__tables[ind];
+            if (ind < this.__tables.length - 1) {
                 SQL = SQL + ",";
             }
             SQL = SQL + " ";
         };
+        
+        var SQL = SQL + "SET ";
+        
+        var nts=0;
+        for(fx in sets){
+            if(nts>0){SQL = SQL + ",";}
+            SQL = SQL + " ";
+            SQL = SQL + fx + "='" + sets[fx].replace(/'/g,"&#39;") + "'";
+            nts++;
+        }
+        SQL = SQL + " ";
+        
+        this.sql = SQL;
+        return this;
+    };
+    
+    // Добавить к запросу WHERE "field1=AAA"
+    this.where = function(cond){
+        var SQL = "";
+        if(typeof cond === "string"){
+            SQL = "WHERE " + cond + " ";
+        }else{
+            SQL = "WHERE " + cond.__where;
+        }
+        
+        //console.log("COND=== ", typeof cond);
+        
         this.sql = this.sql + SQL;
         return this;
     };
@@ -175,6 +293,20 @@ SQLITE_LIB.SQL = function () {
             ende = ","+end;
         }
         this.sql = this.sql + "LIMIT "+num+ende+" ";
+        return this;
+    };
+    
+    // Добавить в SQL запрос ORDER BY
+    this.order_by = function(order){
+        var SQL = "ORDER BY ";
+        for (var ind = 0; ind < order.length; ind++) {
+            SQL = SQL + order[ind];
+            if (ind < order.length - 1) {
+                SQL = SQL + ",";
+            }
+            SQL = SQL + " ";
+        }
+        this.sql = this.sql + SQL;
         return this;
     };
     
@@ -192,20 +324,7 @@ SQLITE_LIB.SQL = function () {
 
 };
 
-/**
- * запрос в базу без возврата значения (CREATE, INSERT, UPDATE)
- * @param {type} sql
- * @returns {undefined}
- */
-SQLITE_LIB.Exec = function (sql) {
-    var Result = this.c_Exec(sql);
-    if (!Result) {
-        if (this.debug) {
-            window.alert("ОШИБКА SQLITE3: " + this.Error());
-        }
-    }
-    return Result;
-};
+
 
 module.exports = SQLITE_LIB;
 
