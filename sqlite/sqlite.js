@@ -110,81 +110,109 @@ SQLITE_LIB.Query = function (sql) {
     return new res();
 };
 
-SQLITE_LIB.GetTablesDB = function() {
+SQLITE_LIB.GetTablesDB = function () {
     return SQLITE_LIB.Query('SELECT name FROM sqlite_master WHERE type = "table"');
 };
 
 // КЛАСС УСЛОВИЙ
 // cond = "aa=bb"
-SQLITE_LIB.WHERE = function(cond){
+SQLITE_LIB.WHERE = function (cond) {
     this.__where = "" + cond;
-    
-    this.ins = function(cond){
-        this.__where = this.__where + "("+ cond +") ";
+
+    this.ins = function (cond) {
+        this.__where = this.__where + "(" + cond + ") ";
         return this;
     };
-    
-    this.add = function(str){
+
+    this.add = function (str) {
         this.__where = this.__where + str;
         return this;
     };
-    this._AND = function(){
+    this._AND = function () {
         this.__where = this.__where + " AND ";
         return this;
     };
-    this._OR = function(){
+    this._OR = function () {
         this.__where = this.__where + " OR ";
         return this;
     };
-    this._XOR = function(){
+    this._XOR = function () {
         this.__where = this.__where + " XOR ";
         return this;
     };
-    this._LIKE = function(){
+    this._LIKE = function () {
         this.__where = this.__where + " LIKE ";
         return this;
     };
-    
-    this.insAND = function(wh){
-        this.__where = this.__where + " AND("+ wh.__where +") ";
+
+    this.insAND = function (wh) {
+        this.__where = this.__where + " AND(" + wh.__where + ") ";
         return this;
     };
-    this.insOR = function(wh){
-        this.__where = this.__where + " OR("+ wh.__where +") ";
+    this.insOR = function (wh) {
+        this.__where = this.__where + " OR(" + wh.__where + ") ";
         return this;
     };
-    this.insXOR = function(wh){
-        this.__where = this.__where + " XOR("+ wh.__where +") ";
+    this.insXOR = function (wh) {
+        this.__where = this.__where + " XOR(" + wh.__where + ") ";
         return this;
     };
-    this.insLIKE = function(wh){
-        this.__where = this.__where + " LIKE("+ wh.__where +") ";
+    this.insLIKE = function (wh) {
+        this.__where = this.__where + " LIKE(" + wh.__where + ") ";
         return this;
     };
-    
-    this.AND = function(cond){
-        this.__where = this.__where + " AND "+cond+" ";
+
+    this.AND = function (cond) {
+        this.__where = this.__where + " AND " + cond + " ";
         return this;
     };
-    
-    this.OR = function(cond){
-        this.__where = this.__where + " OR "+cond+" ";
+
+    this.OR = function (cond) {
+        this.__where = this.__where + " OR " + cond + " ";
         return this;
     };
-    
-    this.XOR = function(cond){
-        this.__where = this.__where + " XOR "+cond+" ";
+
+    this.XOR = function (cond) {
+        this.__where = this.__where + " XOR " + cond + " ";
         return this;
     };
-    this.LIKE = function(cond){
-        this.__where = this.__where + " LIKE %"+ cond +"% ";
+    this.LIKE = function (column, cond) {
+        this.__where = this.__where + " " + column + " LIKE %" + cond + "% ";
         return this;
     };
-    
-    
+
+
     return this;
-    
+
 };
+
+// ТИПЫ ДАННЫХ ПОЛЕЙ
+SQLITE_LIB.F_TEXT = "TEXT ";
+SQLITE_LIB.F_INT = "INTEGER ";
+SQLITE_LIB.F_PK = "PRIMARY KEY ";
+SQLITE_LIB.F_NUM = "NUMERIC ";
+SQLITE_LIB.F_FLOAT = "REAL ";
+SQLITE_LIB.F_UNIQUE = "UNIQUE ";
+SQLITE_LIB.F_NONE = "NONE ";
+SQLITE_LIB.F_ASC = "ASC ";
+SQLITE_LIB.F_DESC = "DESC ";
+SQLITE_LIB.F_NOT_NULL = "NOT NULL ";
+
+SQLITE_LIB.FIELD = function (data) {
+    this.fname = data.name || "noName";
+    this.type = "";
+    if (data.type === undefined) {
+        this.type = "";
+    } else {
+        this.type = " " + data.type;
+    }
+
+    this.__getSQL = function () {
+        return this.fname + this.type;
+    };
+    return this;
+};
+
 
 // Класс создания нового запроса в базу данных
 SQLITE_LIB.SQL = function () {
@@ -213,7 +241,7 @@ SQLITE_LIB.SQL = function () {
     };
 
     this.__fields = [];
-    
+
     // Создать запрос к таблицам SELECT
     this.select = function (fields) {
         this.__isRes = true;
@@ -228,7 +256,8 @@ SQLITE_LIB.SQL = function () {
                 SQL = SQL + ",";
             }
             SQL = SQL + " ";
-        };
+        }
+        ;
 
         SQL = SQL + "FROM ";
 
@@ -238,14 +267,98 @@ SQLITE_LIB.SQL = function () {
                 SQL = SQL + ",";
             }
             SQL = SQL + " ";
-        };
+        }
+        ;
+        this.sql = SQL;
+        return this;
+    };
+
+    // Запрос на создание таблицы
+    // fdata = [new SQLITE_LIB.FIELD({"name":"fieldName", "type":SQLITE_LIB.F_TEXT})]
+    this.create = function (fdata, ne) {
+        this._NE = "";
+        if(ne!==undefined && ne!==false)this._NE = "IF NOT EXISTS ";
+        this.__isRes = false;
+        var SQL = "CREATE TABLE " + this._NE;
+        for (var ind = 0; ind < this.__tables.length; ind++) {
+            SQL = SQL + this.__tables[ind];
+            if (ind < this.__tables.length - 1) {
+                SQL = SQL + ",";
+            }
+            SQL = SQL + " ";
+        }
+
+        SQL = SQL + "(";
+
+        if (typeof fdata === 'string') {
+            SQL = SQL + fdata;
+        } else {
+            for (var ind = 0; ind < fdata.length; ind++) {
+                SQL = SQL + fdata[ind].__getSQL();
+                if (ind < fdata.length - 1) {
+                    SQL = SQL + ",";
+                }
+                SQL = SQL + " ";
+            }
+        }
+        SQL = SQL + ")";
+
         this.sql = SQL;
         return this;
     };
     
+    //УДАЛЕНИЕ ТАБЛИЦЫ
+    this.drop_table = function(tname, ne){
+        this._NE = "";
+        if(ne!==undefined && ne!==false)this._NE = "IF EXISTS ";
+        
+        this.sql = "DROP TABLE " + this._NE + tname;
+        
+        return this;
+    };
+    
+    // Добавление данных с корректировкой символа ' на &#39;
+    // data {"fname":"value"} или SQL
+    this.insert = function (data) {
+        this.__isRes = false;
+        
+        var SQL = "INSERT INTO ";
+        for (var ind = 0; ind < this.__tables.length; ind++) {
+            SQL = SQL + this.__tables[ind];
+            if (ind < this.__tables.length - 1) {
+                SQL = SQL + ",";
+            }
+            SQL = SQL + " ";
+        }
+        
+        if(typeof data ==='string'){
+            SQL = data;
+        }else{
+            SQL = SQL + "(";
+            var pp = 0;
+            for(var fname in data){
+                if(pp>0)SQL = SQL + ", ";
+                SQL = SQL + fname;
+                pp++;
+            }
+            SQL = SQL + ") VALUES (";
+            
+            var pp = 0;
+            for(var fname in data){
+                if(pp>0)SQL = SQL + ", ";
+                SQL = SQL + "'"+data[fname].replace(/'/g, "&#39;")+"'";
+                pp++;
+            }
+            SQL = SQL + ")";
+        }
+        
+        this.sql = SQL;
+        return this;
+    };
+
     // создать запрос на обновление данных в таблице 
     // sets = объект {"поле":"данные", "поле2":"данные2", .... }
-    this.update = function(sets){
+    this.update = function (sets) {
         this.__isRes = false;
         var SQL = "UPDATE ";
         for (var ind = 0; ind < this.__tables.length; ind++) {
@@ -254,50 +367,53 @@ SQLITE_LIB.SQL = function () {
                 SQL = SQL + ",";
             }
             SQL = SQL + " ";
-        };
-        
+        }
+        ;
+
         var SQL = SQL + "SET ";
-        
-        var nts=0;
-        for(fx in sets){
-            if(nts>0){SQL = SQL + ",";}
+
+        var nts = 0;
+        for (fx in sets) {
+            if (nts > 0) {
+                SQL = SQL + ",";
+            }
             SQL = SQL + " ";
-            SQL = SQL + fx + "='" + sets[fx].replace(/'/g,"&#39;") + "'";
+            SQL = SQL + fx + "='" + sets[fx].replace(/'/g, "&#39;") + "'";
             nts++;
         }
         SQL = SQL + " ";
-        
+
         this.sql = SQL;
         return this;
     };
-    
+
     // Добавить к запросу WHERE "field1=AAA"
-    this.where = function(cond){
+    this.where = function (cond) {
         var SQL = "";
-        if(typeof cond === "string"){
+        if (typeof cond === "string") {
             SQL = "WHERE " + cond + " ";
-        }else{
+        } else {
             SQL = "WHERE " + cond.__where;
         }
-        
+
         //console.log("COND=== ", typeof cond);
-        
+
         this.sql = this.sql + SQL;
         return this;
     };
-    
+
     // Добавить лимит вывода
-    this.limit = function(num, end){
+    this.limit = function (num, end) {
         var ende = end || "";
-        if(ende!==""){
-            ende = ","+end;
+        if (ende !== "") {
+            ende = "," + end;
         }
-        this.sql = this.sql + "LIMIT "+num+ende+" ";
+        this.sql = this.sql + "LIMIT " + num + ende + " ";
         return this;
     };
-    
+
     // Добавить в SQL запрос ORDER BY
-    this.order_by = function(order){
+    this.order_by = function (order) {
         var SQL = "ORDER BY ";
         for (var ind = 0; ind < order.length; ind++) {
             SQL = SQL + order[ind];
@@ -309,7 +425,7 @@ SQLITE_LIB.SQL = function () {
         this.sql = this.sql + SQL;
         return this;
     };
-    
+
     // ВЫПОЛНИТЬ ЗАПРОС (false - ошибка) результат при SELECT и true - при других запросах
     this.exec = function (ende) {
         var xend = ende || "";

@@ -85,5 +85,6 @@ var SQL = new DB.SQL();
 var res = new DB.SQL().table("myTable").select(["f1","f2", "f3"]).where("field1=AAA").exec();
 
 
-ФУНКЦИОНАЛ В ДОРАБОТКЕ!!!
+ДЛЯ БОЛЕЕ ПОДРОБНОГО ОПИСАНИЯ - СМОТРИТЕ ФАЙЛ example.html в данной директории
+
 
