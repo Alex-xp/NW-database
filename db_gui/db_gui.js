@@ -31,7 +31,7 @@ DB_GUI.TD = function () {
         
         
         
-        console.log("_onClick = ", reti);
+        //console.log("_onClick = ", reti);
         
         return reti;
     };
@@ -115,7 +115,7 @@ DB_GUI.TABLE = function (db_obj, sql) {
             
         }
         
-        console.log("TDS = ", this.tds);
+        //console.log("TDS = ", this.tds);
     };
     
     // Отрисовка заголовков таблицы
@@ -168,10 +168,9 @@ DB_GUI.TABLE = function (db_obj, sql) {
     this.render = function () {
 
         // Получим результат
-        this.db.Connect();
         var res = this.db.Query(this.__sql);
 
-        console.log("TABLE.RENDER.RES = ", res);
+        //console.log("TABLE.RENDER.RES = ", res);
 
         var ret = '<table style="' + this.style + '" border="' + this.border + '">';
 

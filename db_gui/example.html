@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<!--
+ДАННЫЙ ФАЙЛ ДОЛЖЕН БЫТЬ РАСПОЛОЖЕН В ДИРЕКТОРИИ ПРОЕКТА
+-->
+<html>
+    <head>
+        <title>TODO supply a title</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <div id="T1"></div>
+        <hr/>
+        <div id="T2"></div>
+
+
+        <script>
+
+            /*
+             * Данный модуль работает с коннекторами баз данных, предоставленными
+             * в текущем репозитарии. Для начала работы посмотрите коннекторы.
+             * 
+             * Примеры работы с коннектором SQLITE
+             */
+
+            // Подключение модуля коннектора
+            var DB = require('../node_modules/sqlite/sqlite.js');
+            
+            // уберем отладку коннектора (желательно делать уже после отладки запросов)
+            DB.debug = false;
+
+            // Подключение DB_GUI
+            var DB_GUI = require('../node_modules/db_gui/db_gui.js');
+
+            // Подключаемся к базе данных или создаем её
+            if (DB.Connect("test_gui.db")) {
+                
+                // Создаем таблицу и заполняем её данными
+                if (!DB.Exec("CREATE TABLE tab1(x_id INTEGER PRIMARY KEY ASC, y_dat, z_dat);")) {
+                    console.log('Не могу создать таблицу tab1 или она уже существует в базе');
+                }else{
+                    // наполнение
+                    if(!DB.Exec("INSERT INTO tab1 (y_dat,z_dat) VALUES('Александр','Иванович')")){
+                        console.log('SQL ERROR = ', DB.ErrorMsg);
+                    }
+                    if(!DB.Exec("INSERT INTO tab1 (y_dat,z_dat) VALUES('Михаил','Сергеевич')")){
+                        console.log('SQL ERROR = ', DB.ErrorMsg);
+                    }
+                    if(!DB.Exec("INSERT INTO tab1 (y_dat,z_dat) VALUES('Николай','Викторович')")){
+                        console.log('SQL ERROR = ', DB.ErrorMsg);
+                    }
+                    if(!DB.Exec("INSERT INTO tab1 (y_dat,z_dat) VALUES('Владимир','Олегович')")){
+                        console.log('SQL ERROR = ', DB.ErrorMsg);
+                    }
+                    if(!DB.Exec("INSERT INTO tab1 (y_dat,z_dat) VALUES('Вячеслав','Игоревич')")){
+                        console.log('SQL ERROR = ', DB.ErrorMsg);
+                    }
+                }
+                
+                
+                //***********************************************************************************
+                //            РАБОТА С ТАБЛИЦЕЙ
+                //***********************************************************************************
+                
+                // Для создания таблицы используем объект DB_GUI.TABLE(connector, sql)
+                // connector - Коннектор базы данных
+                // sql - sql запрос в виде строки или конструктор SQL (без exec)
+                var xtab = new DB_GUI.TABLE(DB, "SELECT * FROM tab1");
+                console.log("xtab = ",xtab);
+                // создали объект представления табличных данных
+                
+                /*
+                 * Поля и методы объекта представления табличных данных:
+                 * db - коннектор базы данных
+                 * border - толщина рамок таблицы
+                 * style - общий css стиль таблицы
+                 * HView (true/false) - отображение заголовков таблицы
+                 * IDKey - имя поля идентификатора для обработки событий
+                 * tds - объект описания полей {"name":new DB.TD()} (описание ниже)
+                 * ALL_FIELDS (true/false) - брать все поля запроса или только описаные ячейки
+                 * render() - метод получения html кода таблицы
+                 */
+                
+                // вывод таблицы в элемент
+                document.getElementById("T1").innerHTML = xtab.render();
+                
+                
+                // РАБОТА С ПОЛЯМИ ******************************************************************
+                
+                // Создаем объект таблицы
+                var xtab2 = new DB_GUI.TABLE(DB, "SELECT * FROM tab1");
+                
+                // будем использовать обработчики данных - укажем идентифицирующее поле строки
+                xtab2.IDKey = "x_id";
+                
+                // создаем описание полей new DB_GUI.TD()
+                
+                /*
+                 * title - заголовок ячейки
+                 * thClass - css класс заголовка ячейки
+                 * cssClass - css класс ячейки содержимого
+                 * data - если ячейка не существует в базе (новая) - здесь должен быть html код содержимого
+                 * onClick - строка с именем функции обработчика щелчка по содержимому
+                 * clickWrap - обертка содержимого для клика
+                 * cssClickClass - css класс содержимого по клику
+                 * cssClickStyle - дополнительный css стиль содержимого по клику
+                 */
+                
+                // Если установить xtab2.ALL_FIELDS = false
+                // - таблица будет содержать только те ячейки, которые определил пользователь 
+                
+                // ячейка поля x_id
+                var x_id =  new DB_GUI.TD();
+                x_id.title = "_ИД_"; // отображение заголовка
+                
+                // ячейка поля y_dat
+                var y_dat =  new DB_GUI.TD();
+                y_dat.title = "ДАТА Y"; // отображение заголовка
+                
+                // ячейка поля z_dat
+                var z_dat =  new DB_GUI.TD();
+                z_dat.title = "ДАТА Z"; // отображение заголовка
+                z_dat.onClick = "alert"; // укажем имя функции обработки щелчка (без параметров)
+                
+                // Создадим своё поле
+                var myF = new DB_GUI.TD();
+                myF.title = "ДАТА Z"; // отображение заголовка
+                myF.onClick = "alert"; // укажем имя функции обработки щелчка (без параметров)
+                myF.data = "ID={#.uid.#}";// при создании своего поля - обязательно что нибудь писать в data
+                //  {#.uid.#}  - заменяет в своих полях на идентификатор строки
+                // собственные поля расширяют использование таблиц. Например можно создать поле флажка....
+                
+                // Расставляем ячейки по местам (порядок можно менять по своему усмотрению)
+                xtab2.tds = {
+                    "myF": myF,
+                    "x_id": x_id,
+                    "z_dat": z_dat,
+                    "y_dat": y_dat
+                };
+                
+                
+                
+                console.log("f1 = ",new DB_GUI.TD());
+                
+                
+                document.getElementById("T2").innerHTML = xtab2.render();
+                
+                /*
+                 * ПРАВИЛА СОЗДАНИЯ СВОЕЙ ОБЕРТКИ ДЛЯ ОБРАБОТКИ ONCLICK
+                 * clickWrap = <span onclick="{.onClick.}" class="{.class.}" style="{.style.}" >{.data.}</span>
+                 * {.onClick.} - заменяется на указанную функцию в параметре onClick
+                 * {.class.} - заменяестя на css класс из параметра cssClickClass
+                 * {.style.} - заменяется на css стиль из параметра cssClickStyle
+                 * {.data.} - заменяется на содержимое ячейки
+                 */
+                
+                
+            } else {
+                alert('ОШИБКА ПОДКЛЮЧЕНИЯ');
+            }
+
+
+
+
+        </script>
+
+
+
+
+    </body>
+</html>
