@@ -1,0 +1,9 @@
+{
+  "name": "pgsql",
+  "version": "1.0.1",
+  "description": "PGSQL connector",
+  "devDependencies": {
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-uglify": "^0.9.1"
+  }
+}

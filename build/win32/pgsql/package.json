@@ -1,0 +1,14 @@
+{
+  "name": "pgsql",
+  "version": "1.0.0",
+  "description": "node-webkit работа с базой данных postgresql",
+  "main": "pgsql.js",
+  "private": true,
+  "scripts": {
+    "test": "node pgsql.js"
+  },
+  "gypfile": true,
+  "dependencies": {
+    "bindings": "~1.2.1"
+  }
+}
