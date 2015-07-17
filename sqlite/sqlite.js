@@ -1,9 +1,10 @@
+/* 
+ * Загрузка бинарной части модуля .node
+ */
 var SQLITE_LIB = require('./build/Release/sqlite.node');
 
-SQLITE_LIB.debug = true;
-
 /**
- * Получить текущую версию модуля
+ * Получить текущую версию бинарной части модуля
  * @returns {SQLITE_LIB@call;c_Version}
  */
 SQLITE_LIB.Version = function () {
@@ -28,6 +29,12 @@ SQLITE_LIB.Connect = function (filename) {
     return reti;
 
 };
+// *****************************************************************************
+// СООБЩЕНИЯ ОБ ОШИБКАХ
+// *****************************************************************************
+
+// ОТЛАДКА (вывод сообщений ошибок через alert(ОШИБКА) )
+SQLITE_LIB.debug = true;
 
 /**
  * Получить ошибку
@@ -38,6 +45,43 @@ SQLITE_LIB.Error = function () {
     this.ErrorMsg = this.c_GetErr();
     return this.ErrorMsg;
 };
+
+
+// *****************************************************************************
+// РЕЗУЛЬТАТ
+// *****************************************************************************
+SQLITE_LIB.RESULT = function () {
+    this.result = Array();
+    this.rows_count = 0;
+    this.filelds_count = 0;
+    this.fields_names = Array();
+
+    // Получить значение поля по имени
+    this.getForName = function (row, fName) {
+        return this.result[row][fName];
+    };
+
+    // Получить значение поля по индексам
+    this.get = function (row, col) {
+        var fName = this.fields_names[col];
+        return this.result[row][fName];
+    };
+
+    // получить имя поля
+    this.getFName = function (col) {
+        return this.fields_names[col];
+    };
+    
+    return this;
+
+};
+
+
+
+
+// *****************************************************************************
+// ПРОСТЫЕ ЗАПРОСЫ
+// *****************************************************************************
 
 /**
  * запрос в базу без возврата значения (CREATE, INSERT, UPDATE)
@@ -60,61 +104,46 @@ SQLITE_LIB.Exec = function (sql) {
  * @param {type} sql
  * @returns {SQLITE_LIB.Query@call;c_Exec}
  */
-SQLITE_LIB.Result = Array();
 SQLITE_LIB.Query = function (sql) {
-    SQLITE_LIB.Result = Array();
-    SQLITE_LIB.Result = this.c_Query(sql);
-    if (!SQLITE_LIB.Result) {
+
+    // создать объект результата
+    var res = new SQLITE_LIB.RESULT();
+
+    // получить результат
+    res.result = this.c_Query(sql);
+    if (!res.result) {
         if (this.debug) {
             window.alert("ОШИБКА SQLITE3: " + this.Error());
         }
     }
 
-    var res = function () {
-        this.result = SQLITE_LIB.Result;
-        this.rows_count = SQLITE_LIB.Result.length;
-        this.filelds_count = 0;
-        this.fields_names = Array();
+    // Количество строк в запросе
+    res.rows_count = res.result.length;
 
-        if (this.rows_count > 0) {
-            // составляем массив имен полей
-            var indx = 0;
-            for (fx in this.result[0]) {
-                this.fields_names[indx] = fx;
-                indx++;
-            }
-            // берем количество полей
-            this.filelds_count = this.fields_names.length;
+    if (res.rows_count > 0) {
+        // составляем массив имен полей
+        var indx = 0;
+        for (fx in res.result[0]) {
+            res.fields_names[indx] = fx;
+            indx++;
         }
-
-        // Получить значение поля по имени
-        this.getForName = function (row, fName) {
-            return this.result[row][fName];
-        };
-
-        // Получить значение поля по индексам
-        this.get = function (row, col) {
-            var fName = this.fields_names[col];
-            return this.result[row][fName];
-        };
-
-        // получить имя поля
-        this.getFName = function (col) {
-            return this.fields_names[col];
-        };
-
-
-
-    };
-
-    return new res();
+        // берем количество полей
+        res.filelds_count = res.fields_names.length;
+    }
+    
+    return res;
 };
 
+// ЗАПРОС НА ПОЛУЧЕНИЕ ТАБЛИЦ В БАЗЕ ДАННЫХ !!!!!!!
 SQLITE_LIB.GetTablesDB = function () {
     return SQLITE_LIB.Query('SELECT name FROM sqlite_master WHERE type = "table"');
 };
 
-// КЛАСС УСЛОВИЙ
+
+// *****************************************************************************
+// КОНСТРУКТОР УСЛОВИЙ ЗАПРОСОВ
+// *****************************************************************************
+
 // cond = "aa=bb"
 SQLITE_LIB.WHERE = function (cond) {
     this.__where = "" + cond;
@@ -186,7 +215,13 @@ SQLITE_LIB.WHERE = function (cond) {
 
 };
 
-// ТИПЫ ДАННЫХ ПОЛЕЙ
+
+
+
+// *****************************************************************************
+// ТИПЫ ДАННЫХ ПОЛЕЙ И ОПИСАНИЕ ПОЛЯ
+// *****************************************************************************
+
 SQLITE_LIB.F_TEXT = "TEXT ";
 SQLITE_LIB.F_INT = "INTEGER ";
 SQLITE_LIB.F_PK = "PRIMARY KEY ";
@@ -198,6 +233,7 @@ SQLITE_LIB.F_ASC = "ASC ";
 SQLITE_LIB.F_DESC = "DESC ";
 SQLITE_LIB.F_NOT_NULL = "NOT NULL ";
 
+// КОНСТРУКТОР ОПИСАНИЯ ПОЛЯ ПРИ СОЗДАНИИ ТАБЛИЦЫ CREATE
 SQLITE_LIB.FIELD = function (data) {
     this.fname = data.name || "noName";
     this.type = "";
@@ -214,7 +250,10 @@ SQLITE_LIB.FIELD = function (data) {
 };
 
 
-// Класс создания нового запроса в базу данных
+// *****************************************************************************
+// КОНСТРУКТОР ЗАПРОСА
+// *****************************************************************************/* 
+ 
 SQLITE_LIB.SQL = function () {
     this.sql = "";
     this.__isRes = true; // true - результат false - без результата
@@ -440,8 +479,8 @@ SQLITE_LIB.SQL = function () {
 
 };
 
-
+// *****************************************************************************
+// ЭКСПОРТИРУЕМ МОДУЛЬ
+// *****************************************************************************
 
 module.exports = SQLITE_LIB;
-
-

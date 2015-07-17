@@ -1,0 +1,9 @@
+{
+  "name": "db_gui",
+  "version": "1.0.1",
+  "description": "SQLITE connector",
+  "devDependencies": {
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-uglify": "^0.9.1"
+  }
+}
