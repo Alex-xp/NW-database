@@ -1,0 +1,14 @@
+{
+  "name": "sqlite",
+  "version": "0.0.0",
+  "description": "Node.js Addons Example #1",
+  "main": "sqlite.js",
+  "private": true,
+  "scripts": {
+    "test": "node sqlite.js"
+  },
+  "gypfile": true,
+  "dependencies": {
+    "bindings": "~1.2.1"
+  }
+}
