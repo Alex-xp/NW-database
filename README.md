@@ -9,6 +9,9 @@ node-webkit databases components
 - коннектор PGSQL
 - оболочка для отображения таблиц базы данных
 
+Сборка возможна на следующие системы:
+Windows 32/64, Linux 32/64, MacOS
+
 
 
 
