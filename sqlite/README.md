@@ -88,8 +88,7 @@ var res = new DB.SQL().table("myTable").select(["f1","f2", "f3"]).where("field1=
 ДЛЯ БОЛЕЕ ПОДРОБНОГО ОПИСАНИЯ - СМОТРИТЕ ФАЙЛ example.html в данной директории
 
 В качестве программы-администрирования и настройки базы данных, советую:
-	- http://sqlitestudio.pl/  (sqlitestudio)
-	- http://sourceforge.net/projects/sqliteman/ (sqliteman)
+ http://sqlitestudio.pl/  (sqlitestudio) или http://sourceforge.net/projects/sqliteman/ (sqliteman)
 
 SQLITE и его синтаксис SQL - имеет очень большую реализацию. 
 Более подробно можно узнать: https://sites.google.com/site/javatokens/sqlite (самоучитель)
